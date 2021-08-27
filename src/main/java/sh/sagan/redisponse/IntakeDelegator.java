@@ -19,15 +19,20 @@ public class IntakeDelegator implements RedisPubSubListener<String, String>  {
             return;
         }
         String typeString = parts[0];
-        String uuid = parts[1];
+        String uuidString = parts[1];
         String body = parts[2];
 
         Type.fromString(typeString).ifPresent(type -> {
             switch (type) {
-                case RESPONSE -> redisponse.getResponseFuture(UUID.fromString(uuid)).ifPresent(future -> future.complete(body));
+                case RESPONSE -> {
+                    try {
+                        UUID uuid = UUID.fromString(uuidString);
+                        redisponse.getResponseFuture(uuid).ifPresent(future -> future.complete(body));
+                    } catch (IllegalArgumentException ignored) {}
+                }
                 case REQUEST -> redisponse.getResponseHandler(channel).ifPresent(handler -> {
                     String response = handler.apply(body);
-                    redisponse.publish(channel, Type.RESPONSE.name() + ":" + uuid + ":" + response);
+                    redisponse.publish(channel, Type.RESPONSE.name() + ":" + uuidString + ":" + response);
                 });
             }
         });
