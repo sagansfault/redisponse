@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,7 @@ public class Redisponse {
 
     private final Cache<UUID, CompletableFuture<String>> responseDesk;
     private final Map<String, Function<String, String>> responseHandlers;
+    private final Set<String> subscribed;
 
     private final RedisClient redisClient;
     private final Duration timeout;
@@ -101,6 +104,7 @@ public class Redisponse {
     public Redisponse(Duration timeout, RedisClient redisClient) {
         this.responseDesk = CacheBuilder.newBuilder().expireAfterWrite(timeout).build();
         this.responseHandlers = new HashMap<>();
+        this.subscribed = new HashSet<>();
 
         this.redisClient = redisClient;
         this.timeout = timeout;
@@ -138,7 +142,10 @@ public class Redisponse {
      */
     public void response(String channel, Function<String, String> responseHandler) {
         this.responseHandlers.put(channel, responseHandler);
-        this.asyncPubSubSubscribeConn.subscribe(channel);
+        boolean notPresent = this.subscribed.add(channel);
+        if (notPresent) {
+            this.asyncPubSubSubscribeConn.subscribe(channel);
+        }
     }
 
     void publish(String channel, String msg) {
@@ -151,5 +158,17 @@ public class Redisponse {
 
     Optional<Function<String, String>> getResponseHandler(String channel) {
         return Optional.ofNullable(this.responseHandlers.get(channel));
+    }
+
+    enum Type {
+        RESPONSE, REQUEST;
+
+        public static Optional<Type> fromString(String s) {
+            Type found = null;
+            try {
+                found = Type.valueOf(s);
+            } catch (IllegalArgumentException ignored) {}
+            return Optional.ofNullable(found);
+        }
     }
 }

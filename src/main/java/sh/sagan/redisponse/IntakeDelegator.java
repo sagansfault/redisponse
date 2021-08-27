@@ -22,7 +22,7 @@ public class IntakeDelegator implements RedisPubSubListener<String, String>  {
         String uuidString = parts[1];
         String body = parts[2];
 
-        Type.fromString(typeString).ifPresent(type -> {
+        Redisponse.Type.fromString(typeString).ifPresent(type -> {
             switch (type) {
                 case RESPONSE -> {
                     try {
@@ -32,7 +32,7 @@ public class IntakeDelegator implements RedisPubSubListener<String, String>  {
                 }
                 case REQUEST -> redisponse.getResponseHandler(channel).ifPresent(handler -> {
                     String response = handler.apply(body);
-                    redisponse.publish(channel, Type.RESPONSE.name() + ":" + uuidString + ":" + response);
+                    redisponse.publish(channel, Redisponse.Type.RESPONSE.name() + ":" + uuidString + ":" + response);
                 });
             }
         });
