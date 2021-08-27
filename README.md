@@ -23,3 +23,6 @@ mvn clean package install
 </dependency>
 ```
 If you're new to shading jars, check this out: [Maven Shade Plugin](https://maven.apache.org/plugins/maven-shade-plugin/examples/includes-excludes.html)
+
+## Contributing
+All contributions welcome! If it's a large one, maybe open an issue first discussing what you'd like to do. Submit a PR and I'll try to look at it asap
